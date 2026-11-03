@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vescan-field"
-version = "0.1.2"
+version = "1.0.0"
 description = "VeScan field: VMTK-free centerline trees of the pulmonary arteries, veins and airways from the haversack ranked store"
 readme = "README.md"
 requires-python = ">=3.11"
