@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/images/logo/vescan_logo_512.png" alt="VeScan logo" width="160"></p>
+
 # VeScan-field
 
 **VeScan** — a toolkit for vessel tree cutting, anatomical branch assignment, and crossing-vessel characterization.
@@ -135,7 +137,11 @@ The only input of `main_field.py` is a JSON config ([`configs/field/example.json
 
 Every `.vtk` file loads directly as a Model in 3D Slicer (or any VTK viewer). Colour it with **Display > Scalars > Active Scalar**, using the matching colour table from the repo root: load the CSV in the Colors module as "Categorical Labels".
 
-![Artery tree in 3D Slicer, colored by anatomical segment, with 3 translobar vessels crossing the right horizontal interlobar fissure](docs/images/artery_anatomical_segments.png)
+| Surface (`branch_labeled_surface.vtk`) | Centerline (`anatomical_segments.vtk`) |
+|---|---|
+| ![Artery surface in 3D Slicer, coloured by AnatomicalSegmentPoint, with the right horizontal fissure and two lobe-segment surfaces](docs/images/screenshots/surfaces_artery.png) | ![Artery centerline in 3D Slicer, coloured by AnatomicalSegmentPoint, with the right horizontal fissure and two lobe-segment surfaces](docs/images/screenshots/centerlines_artery.png) |
+
+The artery tree of one patient, coloured by `AnatomicalSegmentPoint` with `ColorTableVessels_EN.csv`; the translobar vessels (red) cross the right horizontal fissure.
 
 The files of one structure, in `final_export_<structure>/`:
 
@@ -179,7 +185,7 @@ VeScan-field/
 ├── configs/field/example.json     # every key, standard values
 ├── tests/field/                   # pytest suite (synthetic phantoms)
 ├── docs/                        # one page per stage (surfaces, centerlines, anatomy, surface_labels, clip)
-├── docs/images/
+├── docs/images/                  # logo, 3D Slicer screenshots
 ├── aggregate_statistics.py        # statistics.json of many patients -> .xlsx
 ├── ColorTable*_EN.csv             # Slicer colour tables
 └── pyproject.toml
