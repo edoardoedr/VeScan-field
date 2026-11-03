@@ -26,6 +26,7 @@ VeScan-field is the VMTK-free twin of [VeScan-vmtk](https://github.com/edoardoed
 - [The pipeline in detail](#the-pipeline-in-detail)
 - [main_field.py and the vescan_field package](#main_fieldpy-and-the-vescan_field-package)
 - [Important conventions](#important-conventions)
+- [Credits](#credits)
 
 ## Overview
 
@@ -242,3 +243,7 @@ results_root_dir[/<patient>]/
 - **`GroupIds` vs `GroupId`**: `05_branch_tree.vtk` has VMTK's names (`GroupIds`, `Blanking`) for compatibility, and the friendly `GroupId` / `IsBifurcation` / `Generation` / `Length` / `AverageRadius`, which every later stage reads.
 - **A bifurcation is a point** (the junction, with 0.5 mm before and after). In VMTK it is the zone where the inscribed spheres of the branches overlap. Bifurcations stay binary, so generations are about twice VMTK's: compare trees by anatomical segment, not by generation.
 - **Labels**: the values are VeScan's (see the [anatomy](docs/anatomy.md) page), and the names are those of the `_EN` colour tables.
+
+## Credits
+
+[haversack](https://github.com/mhalle/haversack), the segmentation pipeline whose outputs VeScan reads, and the field-based approach to centerline extraction used here (centerlines computed from the network's continuous output instead of the binary mask) were developed by **Mike Halle**. VeScan uses haversack through the fork [edoardoedr/haversack](https://github.com/edoardoedr/haversack).
