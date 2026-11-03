@@ -1,0 +1,37 @@
+# Packages only vescan_field (the VMTK-free pipeline), e.g. for the 3D Slicer extension SlicerVEScan:
+#   pip install -e .                                         (development, from the repo root)
+#   pip install "vescan-field @ git+https://github.com/edoardoedr/VeScan-field@<tag>"
+# Lower bounds only: inside Slicer numpy, scipy, vtk and SimpleITK are Slicer's own and must not be replaced,
+# so there install with numpy pinned to Slicer's version, e.g. pip install -e . "numpy==1.26.4".
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vescan-field"
+version = "0.1.0"
+description = "VeScan field: VMTK-free centerline trees of the pulmonary arteries, veins and airways from the haversack ranked store"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Edoardo De Rose" }]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "vtk>=9.3",
+    "SimpleITK>=2.3",
+    "zarr>=3.0,<3.2",  # zarr 3.0 for numpy 1.26 (Slicer 5.10), zarr 3.1 needs numpy 2
+    "pyfqmr",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+vescan-field = "vescan_field.main:main"
+
+[project.urls]
+Repository = "https://github.com/edoardoedr/VeScan-field"
+
+[tool.setuptools.packages.find]
+include = ["vescan_field*"]

@@ -1,0 +1,108 @@
+{
+  "experiment_name": "PD-1-Lung-00043 (standard parameters)",
+  "notes": "Standard configuration: the parameters are those of the dataset runs (configs/field/*_config.json); for a dataset change only the paths, batch.enabled and the structures. One patient (batch.enabled = false): patients_root_dir, surfaces_root_dir and results_root_dir are its folders. With batch.enabled = true every subfolder of patients_root_dir that contains the store is a patient, with one subfolder per patient in surfaces_root_dir and results_root_dir. Paths are relative to this folder.",
+
+  "logging": {
+    "level": "INFO",
+    "file_name": "pipeline.log"
+  },
+
+  "batch": {
+    "enabled": false,
+    "patients_root_dir": "../../Data/PD-1-Lung-00043",
+    "surfaces_root_dir": "../../Outputs/field/surfaces/PD-1-Lung-00043",
+    "results_root_dir": "../../Outputs/field/results/PD-1-Lung-00043",
+    "store": "lung_vessels.duckn.zip",
+    "structures": {
+      "artery":  { "enabled": true, "classes": ["lung_arteries"] },
+      "veins":   { "enabled": true, "classes": ["lung_veins"] },
+      "airways": { "enabled": true, "classes": ["lung_airways", "lung_airways_wall"] }
+    }
+  },
+
+  "pipeline": {
+    "stages": {
+      "surfaces": true,
+      "centerlines": true,
+      "anatomy": true,
+      "surface_labels": true,
+      "clip": true
+    },
+    "debug_files": false,
+    "lobes": {
+      "enabled": ["RUL", "RML", "RLL", "LLL", "LUL"],
+      "names": {}
+    },
+    "surfaces": {
+      "convert": {
+        "method": "flying-edges",
+        "smoothing_factor": 0.5,
+        "decimation_factor": 0.0,
+        "compute_normals": true
+      },
+      "preprocess": {
+        "enabled": true,
+        "decimate": true,
+        "target_points": 100000,
+        "tolerance": 0.05,
+        "keep_largest_component": true
+      },
+      "lobe_segments": {
+        "enabled": true,
+        "extract_fissures": true,
+        "fissure_contact_tolerance": 1.0,
+        "min_fissure_component_area": 50.0,
+        "min_fissure_area": 100.0
+      }
+    },
+    "field": {
+      "pad_voxels": 3
+    },
+    "centerlines": {
+      "delta": 2.0,
+      "min_branch_mm": 3.0,
+      "teasar_scale": 1.5,
+      "teasar_const": 0.5,
+      "min_voxels": 30,
+      "step_mm": 0.5,
+      "crop_pad_voxels": 4,
+      "boundary_neighbours": 8,
+      "graph_epsilon": 0.001,
+      "smooth_iterations_before": 2,
+      "smooth_iterations_after": 1,
+      "ridge_iterations": 3,
+      "ridge_grid": 5,
+      "inflow_root_structures": ["artery", "airways"],
+      "inflow_min_radius_fraction": 0.5,
+      "inflow_fork_radii": 2.0,
+      "write_vescan": true,
+      "bifurcation_halfwidth_mm": null,
+      "short_segment_divisor": 3.0,
+      "add_virtual_root_for_veins": true,
+      "virtual_root_min_length_fraction": 0.1
+    },
+    "anatomy": {
+      "containment_threshold": 0.1,
+      "containment_tolerance": 0.0001,
+      "no_lobe_region_min_length_mm": 25.0,
+      "min_piercings_for_interlobar": 2,
+      "interlobar_max_median_angle_deg": 30.0,
+      "grazing_angle_deg": 10.0,
+      "tangent_window_mm": 5.0,
+      "fissure_patch_radius_mm": 5.0,
+      "fissure_patch_min_points": 12,
+      "duplicate_piercing_mm": 0.1,
+      "statistics": true
+    },
+    "surface_labels": {
+      "branch_arrays": ["GroupId", "IsBifurcation", "Generation", "CellId", "Length", "AverageRadius"],
+      "max_island_area_fraction": 0.0025,
+      "max_island_passes": 5,
+      "max_protected_crossing_id": 500
+    },
+    "clip": {
+      "max_generations": 8,
+      "cap": true
+    }
+  }
+}
