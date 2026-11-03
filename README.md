@@ -47,7 +47,7 @@ From these, VeScan builds a **hierarchical centerline tree** (trunk → bifurcat
 
 Each stage is a plain Python package under `vescan_field/stages/`, run in-process by `vescan_field/orchestrator.py`, which `vescan_field/main.py` calls once per patient: for a single patient, or for a whole dataset processed in parallel. A single JSON config file drives everything: which stages run, every tuning parameter, and whether to process one patient or many.
 
-VeScan-field also runs inside 3D Slicer, through the extension [SlicerVEScan](https://github.com/edoardoedr/SlicerVEScan).
+VeScan-field also runs inside 3D Slicer, through the extension [SlicerVeScan](https://github.com/edoardoedr/SlicerVeScan).
 
 ## Installation
 
