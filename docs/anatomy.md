@@ -37,13 +37,13 @@ With N = number of active lobes:
 
 Every group and every point gets a medical anatomical segment, on **one scale for the three vessel types**, so they never collide when shown together:
 
-| | trunk | main right / left | lobar RUL RML RLL LLL LUL | crossing (type undetermined) | interlobar crossing | translobar crossing |
+| | trunk | main right / left | lobar RUL RML RLL LLL LUL | crossing, unclassified (type undetermined) | interlobar crossing | translobar crossing |
 |---|---|---|---|---|---|---|
 | airway | 1 trachea | 2 / 3 main bronchi | 4-8 | 9 | 73 | 74 |
 | artery | 10 pulmonary trunk | 11 / 12 pulmonary arteries | 13-17 | 18 | 75 | 76 |
 | vein | — | 21 / 22 venous trunks | 23-27 | 28 | 77 | 78 |
 
-0 = unclassified. The names are those of [`ColorTableVessels_EN.csv`](../ColorTableVessels_EN.csv) (e.g. "Right upper lobe artery", "Multilobar vein - translobar"). The lobar values always follow the five canonical lobes: a run on a subset of lobes stays comparable with a full one.
+0 = unclassified. The names are those of [`ColorTableVessels_EN.csv`](../ColorTableVessels_EN.csv) (e.g. "Right upper lobe artery", "Multilobar vein - translobar"). A crossing keeps 9 / 18 / 28 ("Multilobar ... - unclassified") when its type cannot be decided: no fissures, or no piercing of a fissure found. The lobar values always follow the five canonical lobes: a run on a subset of lobes stays comparable with a full one.
 
 **Per group** (`AnatomicalSegment`), three tiers:
 1. touching several lobes, or downstream of a group that does → **crossing**;

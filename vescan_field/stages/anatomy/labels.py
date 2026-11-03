@@ -10,7 +10,8 @@ run on a subset of lobes stays comparable with a full one:
 
 Refined crossings, in a separate block so as not to renumber the others nor collide with
 LobeSegment_* (30-54) and fissures (60-72): 73/74 airway interlobar/translobar, 75/76 artery,
-77/78 vein. 9/18/28 stays "crossing of undetermined type" (no fissures or no piercing found).
+77/78 vein. 9/18/28 stays "<Multilobar ...> - unclassified": a crossing of undetermined type
+(no fissures or no piercing found).
 0 = unclassified.
 """
 from __future__ import annotations
@@ -98,7 +99,7 @@ def label_name(label, vessel_type):
     if offset == OFFSET_TRUNK:
         return names.get("trunk", f"<{vessel_type} has no trunk segment>")
     return {OFFSET_RIGHT: names["right"], OFFSET_LEFT: names["left"],
-            OFFSET_CROSSING: names["crossing"]}.get(offset) or names[LOBE_ORDER[offset - OFFSET_LOBE_BASE]]
+            OFFSET_CROSSING: f"{names['crossing']} - unclassified"}.get(offset) or names[LOBE_ORDER[offset - OFFSET_LOBE_BASE]]
 
 
 def all_labels(vessel_type):
