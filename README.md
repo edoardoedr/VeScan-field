@@ -88,7 +88,7 @@ python -m pytest tests/field
    python main_field.py --config my_dataset.json --structures artery # one structure only
    ```
 
-4. **Look** at `results/<patient>/final_export_<structure>/` in 3D Slicer (see [below](#visualizing-results-in-3d-slicer)), and collect the crossing statistics of the whole dataset with `python aggregate_statistics.py results/ -o crossings.xlsx`.
+4. **Look** at `results/<patient>/final_export_<structure>/` in 3D Slicer (see [below](#visualizing-results-in-3d-slicer)), and collect the crossing statistics of the whole dataset with `python statistics_scripts/aggregate_statistics.py results/ -o crossings.xlsx`.
 
 A structure takes about 30 s on a laptop CPU.
 
@@ -186,7 +186,7 @@ VeScan-field/
 ├── tests/field/                   # pytest suite (synthetic phantoms)
 ├── docs/                        # one page per stage (surfaces, centerlines, anatomy, surface_labels, clip)
 ├── docs/images/                  # logo, 3D Slicer screenshots
-├── aggregate_statistics.py        # statistics.json of many patients -> .xlsx
+├── statistics_scripts/aggregate_statistics.py  # statistics.json of many patients -> .xlsx
 ├── ColorTable*_EN.csv             # Slicer colour tables
 └── pyproject.toml
 ```

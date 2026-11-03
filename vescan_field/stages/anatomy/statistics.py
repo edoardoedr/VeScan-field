@@ -10,7 +10,7 @@ them out:
   statistics.csv   one row per crossing vessel, so concatenating the files across patients and
                    structures is the whole aggregation; a structure with no crossing still writes
                    one row with n_crossings = 0, so "none found" stays distinct from "not run".
-aggregate_statistics.py (repo root) collects the JSON of many patients into one .xlsx.
+statistics_scripts/aggregate_statistics.py collects the JSON of many patients into one .xlsx.
 
 Difference from VeScan: patient and structure are passed in. VeScan guesses them from the
 path, two levels above final_export_<structure>, which in the results_root_dir/<patient>/ layout

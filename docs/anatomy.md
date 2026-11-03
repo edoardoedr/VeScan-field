@@ -112,10 +112,10 @@ PD-1-Lung-00043,veins,vein,4,1,3,2,interlobar,RUL,RML,26.555,23.176,23.198,62,3,
 
 The `fissures` column is an independent cross-check. It comes from the sheet that was geometrically pierced, while `from_lobe`/`to_lobe` come from the reachability labels.
 
-[`aggregate_statistics.py`](../aggregate_statistics.py) collects the `statistics.json` of many patients into one `.xlsx`:
+[`statistics_scripts/aggregate_statistics.py`](../statistics_scripts/aggregate_statistics.py) collects the `statistics.json` of many patients into one `.xlsx`:
 
 ```bash
-python aggregate_statistics.py RESULTS_ROOT [RESULTS_ROOT ...] [-o out.xlsx]
+python statistics_scripts/aggregate_statistics.py RESULTS_ROOT [RESULTS_ROOT ...] [-o out.xlsx]
 ```
 
 ## Configuration (`pipeline.anatomy`)

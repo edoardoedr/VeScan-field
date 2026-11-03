@@ -2,7 +2,10 @@
 """Collects every patient's statistics.json under one root into a single
 .xlsx for filtering and statistics.
 
-    python3 aggregate_statistics.py RESULTS_ROOT [RESULTS_ROOT ...] [-o out.xlsx]
+    python3 statistics_scripts/aggregate_statistics.py RESULTS_ROOT [RESULTS_ROOT ...] [-o out.xlsx]
+
+An existing output is never overwritten (--force to do it), and <out>.run.json records the
+command, the date, the git commit and the input folders.
 
 Each RESULTS_ROOT is a folder holding one subfolder per patient. The layout
 it expects is patient folder, then vessel folder, then the file:
@@ -285,6 +288,23 @@ def write_xlsx(path, sheets):
                 worksheet.column_dimensions[worksheet.cell(1, index).column_letter].width = min(width + 2, 45)
 
 
+def write_run_info(output, inputs):
+    """<output>.run.json next to the output: when, with which command and from which folders it
+    was made, so that an extraction can be traced back to its runs."""
+    import datetime
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))
+    try:
+        commit = subprocess.run(["git", "-C", here, "rev-parse", "--short", "HEAD"], capture_output=True,
+                                text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        commit = None
+    info = dict(created=datetime.datetime.now().isoformat(timespec="seconds"), command=sys.argv,
+                git_commit=commit, inputs=inputs)
+    with open(os.path.splitext(output)[0] + ".run.json", "w") as f:
+        json.dump(info, f, indent=2)
+
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(description=__doc__,
                                       formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -297,6 +317,9 @@ def build_arg_parser():
                          help="Output .xlsx (default: crossing_statistics.xlsx)")
     parser.add_argument("--csv-dir", default=None,
                          help="Also write one CSV per sheet into this folder")
+    parser.add_argument("--force", action="store_true",
+                         help="Overwrite the output if it exists (by default the script stops: "
+                              "an extraction is never replaced by accident)")
     parser.add_argument("-v", "--verbose", action="store_true",
                          help="List each file read, and report any patient id in a JSON "
                               "that disagrees with its own path")
@@ -305,6 +328,11 @@ def build_arg_parser():
 
 def main():
     args = build_arg_parser().parse_args()
+
+    if os.path.exists(args.output) and not args.force:
+        print(f"Errore: '{args.output}' esiste gia'. Scegli un altro -o (una cartella nuova per "
+              f"ogni estrazione) o usa --force.", file=sys.stderr)
+        return 1
 
     try:
         roots = [parse_root_arg(argument) for argument in args.results_roots]
@@ -331,7 +359,9 @@ def main():
         return 1
 
     sheets = [("crossings", crossings), ("structures", structures), ("piercings", piercings)]
+    os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
     write_xlsx(args.output, sheets)
+    write_run_info(args.output, {name: os.path.abspath(path) for name, path in roots})
 
     kinds = crossings["crossing_type"].value_counts() if len(crossings) else {}
     patients = structures.groupby("dataset")["patient"].nunique()
