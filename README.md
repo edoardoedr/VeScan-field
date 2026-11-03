@@ -246,4 +246,8 @@ results_root_dir[/<patient>]/
 
 ## Credits
 
-[haversack](https://github.com/mhalle/haversack), the segmentation pipeline whose outputs VeScan reads, and the field-based approach to centerline extraction used here (centerlines computed from the network's continuous output instead of the binary mask) were developed by **Mike Halle**. VeScan uses haversack through the fork [edoardoedr/haversack](https://github.com/edoardoedr/haversack).
+Thanks to [Mike Halle](https://github.com/mhalle):
+
+- [haversack](https://github.com/mhalle/haversack) is the segmentation pipeline whose outputs VeScan reads. VeScan uses it through the fork [edoardoedr/haversack](https://github.com/edoardoedr/haversack).
+- The field-based approach to centerline extraction (centerlines computed from the network's continuous output instead of the binary mask) is his. He implements it in [thalweg](https://github.com/mhalle/thalweg), a field-based successor of VMTK. VeScan-field has its own implementation and does not depend on thalweg.
+- The decoding of the ranked store reproduces [rankfield](https://github.com/mhalle/rankfield) (Apache-2.0).
