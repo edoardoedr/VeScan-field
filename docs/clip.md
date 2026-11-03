@@ -10,6 +10,7 @@ Cut the tree, then clip the surface. Module [`vescan_field/stages/clip/`](../ves
 
 **Cutting the tree.**
 - The groups with generation ≤ `max_generations` are kept (0 = trunk only).
+- With `generation_lobes` the limit applies only in those lobes: a group that reaches a lobe outside the list (`Reaches_<LOBE>` > 0 in `anatomical_segments.vtk`) is kept at any generation. Shared trunks that lead both inside and outside the list are therefore kept too, and the kept tree stays connected. The default (`null`) is all lobes, i.e. the limit everywhere.
 - There is one cut point per kept-parent → dropped-child edge, at the last point of the parent where the child would have continued. `06_cut_points.mrk.json` has one Slicer point per dropped branch.
 - `cut_centerline.vtk` is the cells of the kept groups, with every array.
 
@@ -62,3 +63,4 @@ The comparison is with VMTK `7efa98c` and SlicerExtension-VMTK `23190ba` (upstre
 |---|---|---|
 | `max_generations` | 8 | keep generations 0..N |
 | `cap` | true | close the cut holes |
+| `generation_lobes` | null (all) | lobes where `max_generations` applies, e.g. `["RUL","RML"]`; subset of `pipeline.lobes.enabled`; others keep every generation |

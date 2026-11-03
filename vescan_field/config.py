@@ -146,6 +146,7 @@ class ClipConfig:
     """Stage clip (vescan_field.stages.clip): VeScan's stages 6-7, without flow extensions."""
     max_generations: int = 8                      # 0 = trunk only; standard of the dataset runs
     cap: bool = True                              # caps on the holes left by the cut
+    generation_lobes: Optional[List[str]] = None  # lobes where max_generations applies; None = all (the others keep every generation)
 
 
 @dataclass
@@ -333,6 +334,12 @@ def build(data: dict, base_dir=None) -> RootConfig:
     bad = sorted((set(lobes.enabled) | set(lobes.names)) - set(LOBE_ORDER))
     if bad:
         raise ConfigError(f"Config error: 'pipeline.lobes' has unknown lobe(s) {bad} (known: {LOBE_ORDER})")
+    gen_lobes = cfg.pipeline.clip.generation_lobes
+    if gen_lobes is not None:
+        bad = sorted(set(gen_lobes) - set(lobes.enabled))
+        if bad or not gen_lobes:
+            raise ConfigError(f"Config error: 'pipeline.clip.generation_lobes' must be null or a non-empty subset "
+                              f"of the enabled lobes {lobes.enabled}, got {gen_lobes!r}")
     if cfg.pipeline.surfaces.convert.method not in ("flying-edges", "surface-nets"):
         raise ConfigError(f"Config error: 'pipeline.surfaces.convert.method' must be 'flying-edges' or "
                           f"'surface-nets', got {cfg.pipeline.surfaces.convert.method!r}")

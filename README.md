@@ -121,6 +121,7 @@ The only input of `main_field.py` is a JSON config ([`configs/field/example.json
 
 **Parameters you are likely to change.**
 - `pipeline.clip.max_generations` (8): how many generations the cut keeps.
+- `pipeline.clip.generation_lobes` (`null` = all): the lobes where `max_generations` applies, e.g. `["RUL", "RML"]`; the other lobes are not cut (needs the anatomy stage).
 - `pipeline.surfaces.preprocess.target_points` (100000): the size of the vessel surface.
 - `pipeline.lobes.enabled`: to run on a subset of the lobes. The labels keep the five-lobe scale, and the vessels of an excluded lobe stay on the main right/left tier instead of becoming unclassified.
 

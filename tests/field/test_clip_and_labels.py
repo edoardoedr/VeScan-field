@@ -67,6 +67,15 @@ def test_clip_and_labels(tmp_path):
         assert set(np.unique(surface.point_array(clipped, name)).tolist()) <= values, name
     assert surface.point_array(clipped, "KeptDroppedSignedDistance") is None
 
+    # generation_lobes: the limit applies only in the listed lobes; a group that reaches another lobe stays
+    kept = lambda cfg: (clip.run(ctx, cfg), set(surface.cell_array(surface.load_surface(p.cut_centerline),
+                                                                   "GroupId").tolist()))[1]
+    everywhere = kept(ClipConfig(max_generations=0))
+    assert kept(ClipConfig(max_generations=0, generation_lobes=list(ctx.lobes))) == everywhere
+    only_left = kept(ClipConfig(max_generations=0, generation_lobes=["LUL"]))
+    assert everywhere < only_left                            # right-side groups are not limited any more
+    assert kept(ClipConfig(max_generations=0, generation_lobes=["RUL", "RML", "RLL", "LLL"])) > everywhere
+
 
 def grid_surface(n=40):
     plane = vtk.vtkPlaneSource()
