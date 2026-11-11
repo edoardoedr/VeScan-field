@@ -15,7 +15,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vescan-field"
-version = "1.1.0"
+version = "1.1.1"
 description = "VeScan field and VeScan thalweg: VMTK-free centerline trees of the pulmonary arteries, veins and airways from the haversack ranked store"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -26,9 +26,9 @@ dependencies = [
     "vtk>=9.6",
     "SimpleITK>=2.5",
     "zarr>=3.3",       # rankfield[store] needs it (Slicer 5.12 ships 3.1.6: pip upgrades it there)
-    "rankfield[store] @ git+https://github.com/mhalle/rankfield.git@v0.3.10",   # reads the ranked store
+    "rankfield[store] @ https://github.com/mhalle/rankfield/archive/refs/tags/v0.3.10.zip",   # reads the ranked store
     "pyfqmr",
-    "thalweg @ git+https://github.com/edoardoedr/thalweg.git@e99659ee2cdb7d2f5603a78faa4f181d7f6df886",   # vescan_thalweg's centerlines
+    "thalweg @ https://github.com/edoardoedr/thalweg/archive/e99659ee2cdb7d2f5603a78faa4f181d7f6df886.zip",   # vescan_thalweg's centerlines
 ]
 
 [project.optional-dependencies]
