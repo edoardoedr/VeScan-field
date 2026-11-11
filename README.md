@@ -15,6 +15,8 @@ Everything is driven by a single JSON config file, for one patient or an entire 
 
 VeScan-field is the VMTK-free twin of [VeScan-vmtk](https://github.com/edoardoedr/VeScan-vmtk). The two run the same stages and write the same files; they differ only in how the centerlines are computed.
 
+This repository also holds **VeScan-thalweg** (`vescan_thalweg`, `main_thalweg.py`): the same pipeline, with the centerlines computed by Mike Halle's [thalweg](https://github.com/mhalle/thalweg) instead of VeScan-field's own tracer. The two are installed together and write the same files; see [VeScan-thalweg](#vescan-thalweg).
+
 ## Table of contents
 
 - [Overview](#overview)
@@ -25,6 +27,7 @@ VeScan-field is the VMTK-free twin of [VeScan-vmtk](https://github.com/edoardoed
 - [Repository layout](#repository-layout)
 - [The pipeline in detail](#the-pipeline-in-detail)
 - [main_field.py and the vescan_field package](#main_fieldpy-and-the-vescan_field-package)
+- [VeScan-thalweg](#vescan-thalweg)
 - [Important conventions](#important-conventions)
 - [Credits](#credits)
 
@@ -52,7 +55,7 @@ VeScan-field also runs inside 3D Slicer, through the extension [SlicerVeScan](ht
 
 ## Installation
 
-Python ≥ 3.11. The dependencies (`numpy`, `scipy`, `vtk`, `SimpleITK`, `zarr`, `pyfqmr`) come with the package; no VMTK and no GPU are needed.
+Python ≥ 3.12 (3D Slicer 5.12's versions or newer: numpy 2.4, scipy 1.17, VTK 9.6, SimpleITK 2.5). The dependencies come with the package: `numpy`, `scipy`, `vtk`, `SimpleITK`, `zarr`, `pyfqmr`, [rankfield](https://github.com/mhalle/rankfield), which reads the ranked store, and [thalweg](https://github.com/edoardoedr/thalweg) for VeScan-thalweg, which brings `pydantic`, `click` and `scikit-image`. rankfield and thalweg are installed from git. No VMTK and no GPU are needed.
 
 ```bash
 pip install "vescan-field @ git+https://github.com/edoardoedr/VeScan-field"
@@ -61,10 +64,12 @@ pip install "vescan-field @ git+https://github.com/edoardoedr/VeScan-field"
 git clone https://github.com/edoardoedr/VeScan-field
 cd VeScan-field
 pip install -e ".[test]"
-python -m pytest tests/field
+python -m pytest tests/field tests/thalweg
 ```
 
-- **zarr version**: zarr 3.1 needs numpy 2; with numpy 1.26 pip picks zarr 3.0.
+- **zarr version**: rankfield needs zarr ≥ 3.3; inside 3D Slicer 5.12 (zarr 3.1.6) pip upgrades it.
+- **VTK version**: keep VTK 9.6 (3D Slicer 5.12's): the anatomy stage gives different results on VTK 9.7.
+- **thalweg** comes from the fork [edoardoedr/thalweg](https://github.com/edoardoedr/thalweg), pinned to one commit in `pyproject.toml`.
 - **Segmentation**: the masks and the store come from the haversack fork. Its own environment (PyTorch, a GPU) is needed only to segment the CTs, not to run VeScan; see its `README_batch_segment.md`.
 
 ## Quick start
@@ -87,6 +92,7 @@ python -m pytest tests/field
    python main_field.py --config my_dataset.json                     # every patient, one after the other
    python main_field.py --config my_dataset.json --jobs 4            # 4 patients at a time
    python main_field.py --config my_dataset.json --structures artery # one structure only
+   python main_thalweg.py --config my_thalweg_dataset.json            # VeScan-thalweg (vescan-thalweg after pip install)
    ```
 
 4. **Look** at `results/<patient>/final_export_<structure>/` in 3D Slicer (see [below](#visualizing-results-in-3d-slicer)), and collect the crossing statistics of the whole dataset with `python statistics_scripts/aggregate_statistics.py results/ -o crossings.xlsx`.
@@ -167,6 +173,7 @@ Their colour table is [`ColorTableLobesFissures_EN.csv`](ColorTableLobesFissures
 ```
 VeScan-field/
 ├── main_field.py                  # the CLI: python main_field.py --config config.json
+├── main_thalweg.py                # the same for VeScan-thalweg
 ├── vescan_field/
 │   ├── main.py                    # patients, batch, --jobs, progress
 │   ├── orchestrator.py            # one patient: patient-level stages, then each structure
@@ -184,9 +191,11 @@ VeScan-field/
 │       ├── anatomy/               # reachability, segments, crossings, labels, statistics
 │       ├── surface_labels/        # transfer
 │       └── clip/                  # cut, clip_surface
+├── vescan_thalweg/                # VeScan-thalweg: vescan_field with thalweg's centerlines stage and margin.py
 ├── configs/field/example.json     # every key, standard values
-├── tests/field/                   # pytest suite (synthetic phantoms)
-├── docs/                        # one page per stage (surfaces, centerlines, anatomy, surface_labels, clip)
+├── configs/thalweg/example.json   # the same for VeScan-thalweg
+├── tests/field/  tests/thalweg/   # pytest suites (synthetic phantoms)
+├── docs/                        # one page per stage (surfaces, centerlines, centerlines_thalweg, anatomy, surface_labels, clip)
 ├── docs/images/                  # logo, 3D Slicer screenshots
 ├── statistics_scripts/aggregate_statistics.py  # statistics.json of many patients -> .xlsx
 ├── ColorTable*_EN.csv             # Slicer colour tables
@@ -200,7 +209,7 @@ Five stages, run in this order. Each page describes the stage's method, inputs, 
 | Stage | What it does | Page |
 |---|---|---|
 | `surfaces` | masks → closed surfaces; lobe mesh and fissures; the vessel surface decimated to N points | [surfaces](docs/surfaces.md) |
-| `centerlines` | the store's margin → TEASAR → oriented tree → groups and `05_` files | [centerlines](docs/centerlines.md) |
+| `centerlines` | the store's margin → TEASAR → oriented tree → groups and `05_` files (VeScan-thalweg: thalweg's tree) | [centerlines](docs/centerlines.md), [thalweg](docs/centerlines_thalweg.md) |
 | `anatomy` | lobes reached by each group; anatomical segment per group and per point; crossing vessels; statistics | [anatomy](docs/anatomy.md) |
 | `surface_labels` | the centerline's labels onto the whole surface | [surface_labels](docs/surface_labels.md) |
 | `clip` | cut the tree at N generations, clip the labelled surface there | [clip](docs/clip.md) |
@@ -236,12 +245,23 @@ results_root_dir[/<patient>]/
 - **`config.py`** is the typed schema (dataclasses) the JSON is parsed into. **`paths.py`** is the only place where file names and folders are defined.
 - **A stage** is a package `vescan_field/stages/<name>/` whose `__init__.py` has `run_patient(pctx, cfg)` (once per patient) and/or `run(ctx, cfg)` (per structure), with `cfg` its own `pipeline.<name>` section. A stage can be switched off and re-run alone on an existing results folder: it reads the previous stages' files from disk.
 
+## VeScan-thalweg
+
+The same pipeline, package `vescan_thalweg/`, run with `main_thalweg.py` (or `vescan-thalweg`) and a config like [`configs/thalweg/example.json`](configs/thalweg/example.json). Only the **centerlines** stage differs: it calls [thalweg](https://github.com/mhalle/thalweg) instead of VeScan-field's tracer. Thalweg traces the tree from the network's continuous field, and its numpy port of VMTK's branch extractor can split it into VMTK-style bifurcation zones. Every other stage is VeScan-field's, and the output files are the same. See [the thalweg centerlines page](docs/centerlines_thalweg.md).
+
+The config is VeScan-field's, with three differences:
+- **no `pipeline.field` section**: thalweg decodes the margin on the store's own grid;
+- **`pipeline.centerlines`** has thalweg's parameters (`trace`), and `bifurcations` chooses how a bifurcation is represented:
+  - `"vmtk"`: a zone, as VeScan-vmtk, with generations comparable with VMTK's;
+  - `"point"`: the junction, as VeScan-field;
+- **`batch.structures.<s>.classes`** chooses the classes whose union is traced, as in VeScan-field (airways: lumen + wall by default).
+
 ## Important conventions
 
 - **LPS everywhere**: surfaces and markups are written in LPS (`SPACE=LPS` on the second line of the `.vtk`, `"coordinateSystem": "LPS"` in `.mrk.json`), as 3D Slicer exports them.
 - **`.vtk`, not `.stl`**: STL stores float32 coordinates with no connectivity, and rebuilding it can split a mesh.
 - **`GroupIds` vs `GroupId`**: `05_branch_tree.vtk` has VMTK's names (`GroupIds`, `Blanking`) for compatibility, and the friendly `GroupId` / `IsBifurcation` / `Generation` / `Length` / `AverageRadius`, which every later stage reads.
-- **A bifurcation is a point** (the junction, with 0.5 mm before and after). In VMTK it is the zone where the inscribed spheres of the branches overlap. Bifurcations stay binary, so generations are about twice VMTK's: compare trees by anatomical segment, not by generation.
+- **A bifurcation is a point** in VeScan-field (the junction, with 0.5 mm before and after). In VMTK it is the zone where the inscribed spheres of the branches overlap. Bifurcations stay binary, so generations are about twice VMTK's: compare trees by anatomical segment, not by generation. VeScan-thalweg offers both (`pipeline.centerlines.bifurcations`).
 - **Labels**: the values are VeScan's (see the [anatomy](docs/anatomy.md) page), and the names are those of the `_EN` colour tables.
 
 ## Credits
@@ -249,5 +269,5 @@ results_root_dir[/<patient>]/
 Thanks to [Mike Halle](https://github.com/mhalle):
 
 - [haversack](https://github.com/mhalle/haversack) is the segmentation pipeline whose outputs VeScan reads. VeScan uses it through the fork [edoardoedr/haversack](https://github.com/edoardoedr/haversack).
-- The field-based approach to centerline extraction (centerlines computed from the network's continuous output instead of the binary mask) is his. He implements it in [thalweg](https://github.com/mhalle/thalweg), a field-based successor of VMTK. VeScan-field has its own implementation and does not depend on thalweg.
-- The decoding of the ranked store reproduces [rankfield](https://github.com/mhalle/rankfield) (Apache-2.0).
+- The field-based approach to centerline extraction (centerlines computed from the network's continuous output instead of the binary mask) is his. He implements it in [thalweg](https://github.com/mhalle/thalweg) (Apache-2.0), a field-based successor of VMTK. VeScan-field has its own implementation; VeScan-thalweg uses thalweg itself, for the centerlines, the graph and the VMTK-style branch split.
+- The ranked store is read and decoded with [rankfield](https://github.com/mhalle/rankfield) (Apache-2.0).

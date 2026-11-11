@@ -1,86 +1,68 @@
-"""[A] Reader of the haversack ranked store (`lung_vessels.duckn.zip`) with zarr + numpy only.
+"""[A] The haversack ranked store (`lung_vessels.duckn.zip`), read with rankfield (M. Halle,
+Apache-2.0; https://github.com/mhalle/rankfield), the library that defines the format.
 
-The only module that knows the format. It follows the README inside the store (sec. 2, 4, 6):
-- `ranks[j]` = class + 1 of the j-th best class (0 = absent), `ranks[0]` is the argmax;
-- `support[j-1]` = byte of the gap (in logits) of class `ranks[j]` from the winner, decoded
-  with the `levels(meta)` table; a class that is not named is `-clip`;
-- geometry: LPS = space_origin + sum_a index[a] * space_direction[a], axes in array order.
+rankfield opens the store (`rankfield.store`: parts in paint order, each a lazy RankField on its
+zarr planes, its geometry in LPS) and decodes it (`rankfield.deficit`). This module adds what
+VeScan needs on top: the class names and extents from the root's seg segments, and the deficits
+of every class on a box of the model grid only, decoding just that box's planes.
 
-`levels` reproduces `rankfield.code.levels` (rankfield 0.3.11, Apache-2.0, M. Halle): rankfield
-needs Python >= 3.12 and cannot be installed in the vmtk-build env.
+Deficit d_k = l_k - max_j l_j of class k: 0 where it wins, minus its gap where it trails, -clip
+where it is not named. Geometry: LPS = origin + index @ directions, index in array order (z,y,x).
 """
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 
 import numpy as np
 
-SUPPORT_MAX = 255
 
-
-def levels(meta: dict) -> np.ndarray:
-    """Table byte -> gap from the winner (logits), 256 float32: as rankfield.levels."""
-    curve = str(meta.get("gap_curve", "uniform"))
-    rng = float(meta.get("gap_range", meta["clip"]))
-    s = np.arange(256, dtype=np.float64) / SUPPORT_MAX
-    if curve == "uniform":
-        g = (1.0 - s) * rng
-    elif curve == "log":
-        origin = float(meta.get("gap_origin", 0.5))
-        g = origin * np.expm1((1.0 - s) * np.log1p(rng / origin))
-    else:
-        raise ValueError(f"unknown gap_curve: {curve}")
-    return g.astype(np.float32)
-
-
-def decode_deficit(ranks: np.ndarray, support: np.ndarray, k: int, lut: np.ndarray,
-                   clip: float) -> np.ndarray:
-    """Deficit d_k = l_k - max_j l_j of one class (0 where it wins, -clip where it is not named)."""
-    d = np.where(ranks[0] == k + 1, np.float32(0.0), np.float32(-clip))
-    for j in range(1, ranks.shape[0]):
-        hit = ranks[j] == k + 1
-        d[hit] = -lut[support[j - 1][hit]]
-    return d
+def box_deficits(code, lo, hi) -> np.ndarray:
+    """Deficits of all classes of RankField `code` on the box [lo, hi) of its grid, (K, z, y, x)
+    float32: rankfield.deficit on a RankField holding only the box's planes (each plane read once)."""
+    import rankfield as rf
+    sl = (slice(None),) + tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
+    meta = {k: v for k, v in code.meta.items() if k != "shape"}      # the box's shape is its planes'
+    box = dataclasses.replace(code, ranks=np.asarray(code.ranks[sl]), support=np.asarray(code.support[sl]),
+                              tail=None, tails=None, meta=meta)       # the deficit reads ranks and support
+    return np.stack([rf.deficit(box, k) for k in range(code.classes)]).astype(np.float32, copy=False)
 
 
 class Store:
-    """One part (parts/0) of the store: metadata, classes, geometry, box reads."""
+    """One part of the store (default: part 0): metadata, classes, geometry, box reads."""
 
-    def __init__(self, path, part: str = "parts/0"):
-        import zarr
+    def __init__(self, path, part: int = 0):
+        import rankfield.store as rs
         self.path = Path(path)
-        self._zs = zarr.storage.ZipStore(str(path), mode="r")
-        root = zarr.open_group(self._zs, mode="r")
-        self.part = root[part]
-        self.meta = self.part.attrs["duckn"]["extensions"]["ranked"]
-        if self.meta.get("mode", "ranked") != "ranked":
-            raise ValueError(f"store is not ranked: {self.meta.get('mode')}")
-        self.K = int(self.meta["classes"])
-        self.clip = float(self.meta["clip"])
-        self.lut = levels(self.meta)
-        self.ranks = self.part["ranks"]
-        self.support = self.part["support"]
-        self.shape = tuple(self.ranks.shape[1:])
+        root = rs.open_group(self.path)
+        self._root = root
+        parts = dict(zip(rs.part_indices(root), rs.read_parts(root)))
+        if part not in parts:
+            raise ValueError(f"{self.path.name} has no part {part} (parts: {sorted(parts)})")
+        self.code = parts[part].field                      # lazy: planes read by box
+        self.meta = self.code.meta
+        self.K = self.code.classes
+        self.clip = self.code.clip
+        self.shape = tuple(int(v) for v in self.code.support.shape[1:])
 
-        g = self.ranks.attrs["duckn"]
-        if g.get("space", "left-posterior-superior") != "left-posterior-superior":
-            raise ValueError(f"space is not LPS: {g.get('space')}")
-        self.origin = np.array(g["space_origin"], float)
+        g = self.code.geometry
+        self.origin = np.asarray(g.origin, float)
         # columns = LPS vectors of the array axes (z,y,x); their length is the spacing
-        self.axes = np.array([a["space_direction"] for a in g["axes"] if a["kind"] == "space"],
-                             float).T
+        self.axes = np.asarray(g.directions, float).T
 
         # names -> channel, and extent (inclusive indices) from the root's segments
-        labels = list(self.meta["labels"])
+        labels = list(self.code.labels)
         self.class_index, self.extent = {}, {}
-        for s in root.attrs["duckn"]["extensions"]["seg"]["segments"]:
+        for s in root.attrs.asdict()["duckn"]["extensions"]["seg"]["segments"]:
+            if s["label_values"][0] not in labels:
+                continue                                    # a segment of another part
             c = labels.index(s["label_values"][0])
             self.class_index[s["name"]] = c
             if "extent" in s:
                 self.extent[c] = np.array(s["extent"], int).reshape(3, 2)
 
     def close(self):
-        self._zs.close()
+        self._root.store.close()
 
     # ------------------------------------------------------------------ geometry
     def index_to_lps(self, idx_zyx: np.ndarray) -> np.ndarray:
@@ -100,25 +82,19 @@ class Store:
             ext = self.extent[c]
             lo, hi = ext[:, 0], ext[:, 1] + 1
         else:
-            nz = np.argwhere(np.asarray(self.ranks[0]) == c + 1)
+            nz = np.argwhere(np.asarray(self.code.ranks[0]) == c + 1)
             if not len(nz):
                 raise ValueError(f"class {c} not in the store")
             lo, hi = nz.min(0), nz.max(0) + 1
         return np.maximum(lo - pad, 0), np.minimum(hi + pad, np.array(self.shape))
 
-    def read_box(self, lo, hi):
-        sl = tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
-        return np.asarray(self.ranks[(slice(None),) + sl]), np.asarray(self.support[(slice(None),) + sl])
-
     def deficits(self, lo, hi) -> np.ndarray:
         """Deficits of all K classes on the box, (K, z, y, x) float32."""
-        ranks, support = self.read_box(lo, hi)
-        return np.stack([decode_deficit(ranks, support, k, self.lut, self.clip)
-                         for k in range(self.K)])
+        return box_deficits(self.code, lo, hi)
 
     def labelmap(self, lo=None, hi=None) -> np.ndarray:
         """The model labels (ranks[0] - 1), exact: do not derive them from argmax(deficit)."""
         if lo is None:
-            return np.asarray(self.ranks[0]).astype(np.int16) - 1
+            return np.asarray(self.code.ranks[0]).astype(np.int16) - 1
         sl = tuple(slice(int(a), int(b)) for a, b in zip(lo, hi))
-        return np.asarray(self.ranks[(0,) + sl]).astype(np.int16) - 1
+        return np.asarray(self.code.ranks[(0,) + sl]).astype(np.int16) - 1

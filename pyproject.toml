@@ -1,8 +1,13 @@
-# Packages only vescan_field (the VMTK-free pipeline), e.g. for the 3D Slicer extension SlicerVEScan:
-#   pip install -e .                                         (development, from the repo root)
+# Packages the two VMTK-free pipelines from the haversack ranked store, which work together:
+# vescan_field (its own tracer; e.g. for the 3D Slicer extension SlicerVEScan) and vescan_thalweg (the
+# centerlines of Mike Halle's thalweg):
+#   pip install -e ".[test]"                                 (development, from the repo root)
 #   pip install "vescan-field @ git+https://github.com/edoardoedr/VeScan-field@<tag>"
-# Lower bounds only: inside Slicer numpy, scipy, vtk and SimpleITK are Slicer's own and must not be replaced,
-# so there install with numpy pinned to Slicer's version, e.g. pip install -e . "numpy==1.26.4".
+# thalweg comes from the fork edoardoedr/thalweg (for development, a clone of it installed
+# with pip install -e <clone>); it brings pydantic, click and scikit-image.
+# Lower bounds only, at 3D Slicer 5.12's versions (Python 3.12.10, numpy 2.4.6, scipy 1.17.1, VTK 9.6.2,
+# SimpleITK 2.5.5, zarr 3.1.6): inside Slicer these are Slicer's own and must not be replaced, so there
+# install with numpy pinned to Slicer's version: pip install -e . "numpy==2.4.6".
 
 [build-system]
 requires = ["setuptools>=64"]
@@ -10,18 +15,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vescan-field"
-version = "1.0.0"
-description = "VeScan field: VMTK-free centerline trees of the pulmonary arteries, veins and airways from the haversack ranked store"
+version = "1.1.0"
+description = "VeScan field and VeScan thalweg: VMTK-free centerline trees of the pulmonary arteries, veins and airways from the haversack ranked store"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [{ name = "Edoardo De Rose" }]
 dependencies = [
-    "numpy>=1.26",
-    "scipy>=1.11",
-    "vtk>=9.3",
-    "SimpleITK>=2.3",
-    "zarr>=3.0,<3.2",  # zarr 3.0 for numpy 1.26 (Slicer 5.10), zarr 3.1 needs numpy 2
+    "numpy>=2.4",
+    "scipy>=1.17",
+    "vtk>=9.6",
+    "SimpleITK>=2.5",
+    "zarr>=3.3",       # rankfield[store] needs it (Slicer 5.12 ships 3.1.6: pip upgrades it there)
+    "rankfield[store] @ git+https://github.com/mhalle/rankfield.git@v0.3.10",   # reads the ranked store
     "pyfqmr",
+    "thalweg @ git+https://github.com/edoardoedr/thalweg.git@e99659ee2cdb7d2f5603a78faa4f181d7f6df886",   # vescan_thalweg's centerlines
 ]
 
 [project.optional-dependencies]
@@ -29,9 +36,10 @@ test = ["pytest"]
 
 [project.scripts]
 vescan-field = "vescan_field.main:main"
+vescan-thalweg = "vescan_thalweg.main:main"
 
 [project.urls]
 Repository = "https://github.com/edoardoedr/VeScan-field"
 
 [tool.setuptools.packages.find]
-include = ["vescan_field*"]
+include = ["vescan_field*", "vescan_thalweg*"]
