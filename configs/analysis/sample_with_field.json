@@ -1,0 +1,29 @@
+{
+  "notes": "Local copies of server samples: results in Outputs/<dataset>/<pipeline>/<patient>/, inputs (masks, store) in Data/<dataset>/<patient>/ (patients_root). Add datasets or patients by copying them there.",
+  "datasets": {
+    "anti_pd_1_lung": {
+      "runs": {
+        "vmtk": "Outputs/anti_pd_1_lung/vmtk",
+        "thalweg": "Outputs/anti_pd_1_lung/thalweg",
+        "field": "Outputs/anti_pd_1_lung/field"
+      },
+      "configs": {
+        "thalweg": "configs/thalweg/anti_pd_1_lung_config.json",
+        "field": "configs/field/anti_pd_1_lung_config.json"
+      },
+      "patients_root": "Data/anti_pd_1_lung"
+    },
+    "nsclc_radiogenomics": {
+      "runs": {
+        "vmtk": "Outputs/nsclc_radiogenomics/vmtk",
+        "thalweg": "Outputs/nsclc_radiogenomics/thalweg",
+        "field": "Outputs/nsclc_radiogenomics/field"
+      },
+      "configs": {
+        "thalweg": "configs/thalweg/nsclc_radiogenomics_config.json",
+        "field": "configs/field/nsclc_radiogenomics_config.json"
+      },
+      "patients_root": "Data/nsclc_radiogenomics"
+    }
+  }
+}

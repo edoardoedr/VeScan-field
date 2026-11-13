@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-STORE = Path(__file__).resolve().parents[2] / "Data" / "PD-1-Lung-00043" / "lung_vessels.duckn.zip"
+STORE = Path(__file__).resolve().parents[2] / "Data" / "anti_pd_1_lung" / "PD-1-Lung-00043" / "lung_vessels.duckn.zip"
 pytestmark = pytest.mark.skipif(not STORE.exists(), reason="PD-1-Lung-00043 store not present")
 
 

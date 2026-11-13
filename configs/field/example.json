@@ -9,9 +9,9 @@
 
   "batch": {
     "enabled": false,
-    "patients_root_dir": "../../Data/PD-1-Lung-00043",
-    "surfaces_root_dir": "../../Outputs/field/surfaces/PD-1-Lung-00043",
-    "results_root_dir": "../../Outputs/field/results/PD-1-Lung-00043",
+    "patients_root_dir": "../../Data/anti_pd_1_lung/PD-1-Lung-00043",
+    "surfaces_root_dir": "../../Outputs/local/surfaces/PD-1-Lung-00043",
+    "results_root_dir": "../../Outputs/local/field/PD-1-Lung-00043",
     "store": "lung_vessels.duckn.zip",
     "structures": {
       "artery":  { "enabled": true, "classes": ["lung_arteries"] },

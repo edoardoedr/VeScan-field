@@ -10,7 +10,7 @@ from vescan_field.store import Store, box_deficits
 
 META = dict(mode="ranked", version="0.3", classes=5, depth=3, clip=8.0, gap_curve="log", gap_range=64.0,
             gap_origin=0.5)
-STORE = Path(__file__).resolve().parents[2] / "Data" / "PD-1-Lung-00043" / "lung_vessels.duckn.zip"
+STORE = Path(__file__).resolve().parents[2] / "Data" / "anti_pd_1_lung" / "PD-1-Lung-00043" / "lung_vessels.duckn.zip"
 
 
 def synthetic(seed=1, shape=(6, 7, 8)):
