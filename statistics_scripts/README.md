@@ -89,7 +89,7 @@ From Mike Halle's review of the 2026-11-03 comparison (NEXT.md, section 7). `<pl
 | The same with VMTK seeded at the thalweg tips, and VMTK's failures | 5 | `missing_area_pct_{default,seeded}`, `missing_area_pct_both`, `reached_frac_*`, `excluded_*` (one raw VMTK centerline per seeding, no branch split) |
 | Slice thickness | 1 | `slice_mm` (the masks' slice spacing) on every row; sheet `by_slice` (<=1, 1-2, 2-3, >3 mm) |
 
-## What to expect (PD-1-Lung-00043, arteries)
+## What to expect
 
 One patient, so an indication only.
 
